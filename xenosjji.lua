@@ -1,5 +1,6 @@
 local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Melohi/v3rm/refs/heads/main/materialuiexperiment"))()
 local player = game:GetService("Players").LocalPlayer
+getgenv().Theme = "Light"
 
 local X = Material.Load({
     Title = "xenos",
@@ -22,7 +23,18 @@ local QuestDropdown = CombatTab.Dropdown({
     Text = "Quest Type",
     Callback = function(Value)
         getgenv().QuestType = Value
-        print(getgenv().QuestType)
+    end,
+    Options = {
+        "Normal",
+        "Modded"
+    }
+})
+
+local QuestDropdown = CombatTab.Dropdown({
+    Text = "Quest",
+    Callback = function(Value)
+        getgenv().Quest = Value
+        print(getgenv().Quest)
     end,
     Options = {
         "Exorcise",
@@ -56,7 +68,7 @@ local QuestToggle = CombatTab.Toggle({
             while getgenv().autoquest == true do
                 if getgenv().QuestLevel == "Level 0 - 60" then
                     local ohTable1 = {
-                        ["type"] = getgenv().QuestType,
+                        ["type"] = getgenv().Quest,
                         ["set"] = "Umi Village Set",
                         ["rewards"] = {
                             ["essence"] = 2,
@@ -66,9 +78,9 @@ local QuestToggle = CombatTab.Toggle({
                         },
                         ["grade"] = game:GetService("Players").LocalPlayer.ReplicatedData.grade.Value,
                         ["difficulty"] = 2,
-                        ["title"] = getgenv().QuestType,
+                        ["title"] = getgenv().Quest,
                         ["level"] = 60,
-                        ["amount"] = (getgenv().QuestType == "Band" or getgenv().QuestType == "Exorcise") and 4 or 1,
+                        ["amount"] = (getgenv().Quest == "Band" or getgenv().Quest == "Exorcise") and 4 or 1,
                         ["subtitle"] = "",
                         ["rewardsText"] = "280,000 Exp | 12,000 Cash | xenos.private"
                     }
@@ -76,7 +88,7 @@ local QuestToggle = CombatTab.Toggle({
                     game:GetService("ReplicatedStorage").Remotes.Server.Data.AcceptQuest:InvokeServer(ohTable1)
                 elseif getgenv().QuestLevel == "Level 60 - 120" then
                     local ohTable1 = {
-                        ["type"] = getgenv().QuestType,
+                        ["type"] = getgenv().Quest,
                         ["set"] = "Umi Village Set",
                         ["rewards"] = {
                             ["essence"] = 4,
@@ -86,8 +98,8 @@ local QuestToggle = CombatTab.Toggle({
                         },
                         ["rewardsText"] = "600,000 Exp | 14,000 Cash | xenos.private",
                         ["difficulty"] = 2,
-                        ["title"] = getgenv().QuestType,
-                        ["amount"] = (getgenv().QuestType == "Band" or getgenv().QuestType == "Exorcise") and 4 or 1,
+                        ["title"] = getgenv().Quest,
+                        ["amount"] = (getgenv().Quest == "Band" or getgenv().Quest == "Exorcise") and 4 or 1,
                         ["level"] = 120,
                         ["grade"] = game:GetService("Players").LocalPlayer.ReplicatedData.grade.Value,
                         ["subtitle"] = ""
@@ -96,7 +108,7 @@ local QuestToggle = CombatTab.Toggle({
                     game:GetService("ReplicatedStorage").Remotes.Server.Data.AcceptQuest:InvokeServer(ohTable1)
                 elseif getgenv().QuestLevel == "Level 120 - 180" then
                     local ohTable1 = {
-                        ["type"] = getgenv().QuestType,
+                        ["type"] = getgenv().Quest,
                         ["set"] = "Numa Temple Set",
                         ["rewards"] = {
                             ["essence"] = 10,
@@ -106,8 +118,8 @@ local QuestToggle = CombatTab.Toggle({
                         },
                         ["rewardsText"] = "3,500,000 Exp | 36,000 Cash | xenos.private",
                         ["difficulty"] = 2,
-                        ["title"] = getgenv().QuestType,
-                        ["amount"] = (getgenv().QuestType == "Band" or getgenv().QuestType == "Exorcise") and 4 or 1,
+                        ["title"] = getgenv().Quest,
+                        ["amount"] = (getgenv().Quest == "Band" or getgenv().Quest == "Exorcise") and 4 or 1,
                         ["level"] = 180,
                         ["grade"] = game:GetService("Players").LocalPlayer.ReplicatedData.grade.Value,
                         ["subtitle"] = ""
@@ -116,47 +128,26 @@ local QuestToggle = CombatTab.Toggle({
                     game:GetService("ReplicatedStorage").Remotes.Server.Data.AcceptQuest:InvokeServer(ohTable1)
                 elseif getgenv().QuestLevel == "Level 180 - 240+" then
                     local ohTable1 = {
-                        ["type"] = getgenv().QuestType,
+                        ["type"] = getgenv().Quest,
                         ["set"] = "Numa Temple Set",
                         ["rewards"] = {
-                            ["essence"] = 10,
-                            ["cash"] = 40000,
-                            ["exp"] = 7500000,
+                            ["essence"] = 40,
+                            ["cash"] = 50000,
+                            ["exp"] = 8850000,
                             ["chestMeter"] = 55
                         },
-                        ["rewardsText"] = "7,500,000 Exp | 40,000 Cash | xenos.private",
+                        ["rewardsText"] = "8,850,000 Exp | 50,000 Cash | xenos.private",
                         ["difficulty"] = 2,
-                        ["title"] = getgenv().QuestType,
-                        ["amount"] = (getgenv().QuestType == "Band" or getgenv().QuestType == "Exorcise") and 4 or 1,
-                        ["level"] = 400,
+                        ["title"] = getgenv().Quest,
+                        ["amount"] = (getgenv().Quest == "Band" or getgenv().Quest == "Exorcise") and 4 or 1,
+                        ["level"] = 430,
                         ["subtitle"] = "",
                         ["grade"] = game:GetService("Players").LocalPlayer.ReplicatedData.grade.Value
                     }
                 
                     game:GetService("ReplicatedStorage").Remotes.Server.Data.AcceptQuest:InvokeServer(ohTable1)
                 end
-
-                local localPlayer = game.Players.LocalPlayer
-
-                if getgenv().autcompletequest == true then
-                    local questData = localPlayer:FindFirstChild("ReplicatedTempData") and localPlayer.ReplicatedTempData:FindFirstChild("quest")
-                    if not questData then
-                        pcall(function()
-                            game:GetService("ReplicatedStorage").Remotes.Server.Data.TakeQuest:InvokeServer(args)
-                        end)
-                    end
-
-                    local localPlayer = game.Players.LocalPlayer
-                    local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
-                    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-                    local questMarker = localPlayer.PlayerGui:WaitForChild("QuestMarker")
-                    local adornee = questMarker.Adornee
-
-                    if adornee and adornee:IsA("BasePart") then
-                        humanoidRootPart.CFrame = adornee.CFrame
-                    end
-                end
-                task.wait(0.1)
+                task.wait()
             end
         else
             getgenv().autoquest = false
@@ -168,13 +159,43 @@ local QuestToggle = CombatTab.Toggle({
 local QuestToggle = CombatTab.Toggle({
     Text = "Auto-Complete-Quest",
     Callback = function(Value)
-        if Value then
-            getgenv().autcompletequest = true
-        else
-            getgenv().autcompletequest = false
+        getgenv().autcompletequest = Value -- Set the toggle state
+        if getgenv().autcompletequest then
+            task.spawn(function() -- Run in a separate thread
+                while getgenv().autcompletequest do
+                    local success, err = pcall(function()
+                        local localPlayer = game.Players.LocalPlayer
+                        local replicatedTempData = localPlayer:FindFirstChild("ReplicatedTempData")
+                        local questData = replicatedTempData and replicatedTempData:FindFirstChild("quest")
+
+                        -- If no active quest, try to take one
+                        if not questData then
+                            local args = {} -- Replace with the actual arguments for TakeQuest
+                            game:GetService("ReplicatedStorage").Remotes.Server.Data.TakeQuest:InvokeServer(args)
+                        end
+
+                        -- Move to the quest marker
+                        local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+                        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+
+                        local questMarker = localPlayer.PlayerGui:FindFirstChild("QuestMarker")
+                        local adornee = questMarker and questMarker.Adornee
+
+                        if humanoidRootPart and adornee and adornee:IsA("BasePart") then
+                            humanoidRootPart.CFrame = adornee.CFrame
+                        end
+                    end)
+
+                    if not success then
+                        warn("Error in Auto-Complete-Quest: " .. tostring(err))
+                    end
+
+                    task.wait(0.5) -- Add a short delay to avoid excessive execution
+                end
+            end)
         end
     end,
-    Enabled = false
+    Enabled = false -- Default state
 })
 
 local sectiontest = CombatTab.Section({
@@ -235,10 +256,31 @@ local sectiontest = PlayerTab.Section({
 	Text = "LocalPlayer",
 })
 
+local RejoinAfterKickToggle = PlayerTab.Toggle({
+    Text = "Rejoin on kick",
+    Callback = function(Value)
+        if Value then
+            getgenv().rejoinafterkick = true
+            print("Rejoin after kick is enabled.")  -- Debug line
+            game.Players.PlayerRemoving:Connect(function(plr)
+                print("PlayerRemoving event triggered.")  -- Debug line
+                if plr == game.Players.LocalPlayer and getgenv().rejoinafterkick then
+                    print("Kicked, teleporting back.")  -- Debug line
+                    game:GetService('TeleportService'):Teleport(game.PlaceId)
+                end
+            end)
+        else
+            getgenv().rejoinafterkick = false
+        end
+    end,
+    Enabled = false
+})
+
+
 local WalkSpeedSlider = PlayerTab.Slider({
 	Text = "WalkSpeed",
 	Callback = function(Value)
-		player.LocalPlayer.Character:FindFirstChild("Humanoid").WalkSpeed = Value
+		player.Character:FindFirstChild("Humanoid").WalkSpeed = Value
 	end,
 	Min = 40,
 	Max = 350,
@@ -248,11 +290,114 @@ local WalkSpeedSlider = PlayerTab.Slider({
 local JumpPowerSlider = PlayerTab.Slider({
 	Text = "JumpPower",
 	Callback = function(Value)
-		player.LocalPlayer.Character:FindFirstChild("Humanoid").JumpPower = Value
+		player.Character:FindFirstChild("Humanoid").JumpPower = Value
 	end,
 	Min = 77,
 	Max = 350,
 	Def = 40
+})
+
+
+local sectiontest = PlayerTab.Section({
+    Text = "Cursed Tools",
+})
+
+local jowe = {
+    ["Feathered Spear"] = "rbxassetid://18965053091",
+    ["Inverted Spear Of Heaven"] = "rbxassetid://12144018771",
+    ["Playful Cloud"] = "rbxassetid://16182405716",
+    ["Rusty Katana"] = "rbxassetid://18946385050",
+    ["Iron Blade"] = "rbxassetid://18946384483",
+    ["Purifying Dagger"] = "rbxassetid://18946384791",
+    ["Executioner Sword"] = " ",
+    ["Copy"] = " ",
+    ["Copy Katana"] = "rbxassetid://18946385050",
+    ["Vengeance"] = "rbxassetid://12144006234",
+    ["Jet Black"] = "rbxassetid://18945918018",
+    ["Dragon Bone"] = "rbxassetid://18946383772",
+    ["Blood Sword"] = "rbxassetid://95561372374029",
+    ["Ravenous Axe"] = "rbxassetid://104688020372819",
+    ["Split Soul"] = "rbxassetid://18946383943",
+    ["Slaughter Demon"] = "rbxassetid://18946384121",
+    ["Viscera Scythe"] = "rbxassetid://18946383595",
+    ["Electric Staff"] = "rbxassetid://18946383355",
+    ["Inventory Curse"] = "rbxassetid://16199335967"
+}
+
+local selectedTools = {}
+
+local toolsdropdown = PlayerTab.Dropdown({
+    Text = "Selection",
+    MultiSelect = true,
+    Callback = function(Value)
+        if type(Value) == "table" then
+            selectedTools = Value 
+            print("Selected Tools: " .. table.concat(selectedTools, ", "))
+        else
+            print("Single Tool Selected: " .. Value)
+            selectedTools = {Value}
+        end
+    end,
+    Options = (function()
+        local options = {}
+        for toolName, _ in pairs(jowe) do
+            table.insert(options, toolName)
+        end
+        return options
+    end)(),
+    Menu = {
+        Information = function(self)
+            X.Banner({
+                Text = "Choose multiple tools from the dropdown!"
+            })
+        end
+    }
+})
+local spawnedTools = {}
+
+local N = PlayerTab.Button({
+    Text = "Spawn Cursed Tool(s)",
+    Callback = function()
+        if #selectedTools == 0 then
+            print("No tools selected!")
+            return
+        end
+
+        for _, toolName in ipairs(selectedTools) do
+            if jowe[toolName] and jowe[toolName] ~= "" then
+                local Tool = Instance.new("Tool")
+                Tool.Name = toolName
+                Tool.TextureId = jowe[toolName]
+                Tool.Parent = game:GetService("Players").LocalPlayer.Backpack
+
+                table.insert(spawnedTools, Tool)
+
+                print("Spawned tool: " .. toolName)
+            else
+                print("Invalid tool or no texture for: " .. toolName)
+            end
+        end
+    end,
+})
+
+local ClearButton = PlayerTab.Button({
+    Text = "Clear Spawned Tool(s)",
+    Callback = function()
+        if #spawnedTools == 0 then
+            print("No tools to clear!")
+            return
+        end
+
+        for _, tool in ipairs(spawnedTools) do
+            if tool and tool.Parent then
+                tool:Destroy()
+                print("Cleared tool: " .. tool.Name)
+            end
+        end
+
+        spawnedTools = {}
+        print("All spawned tools have been cleared.")
+    end,
 })
 
 local sectiontest = PlayerTab.Section({
@@ -574,29 +719,189 @@ for subclass, npcs in pairs(npcList) do
     })
 end
 
-local ConfigTab = X.New({
-    Title = "Settings"
+local BossTab = X.New({
+    Title = "Bosses"
 })
 
-local sectiontest = ConfigTab.Section({
-	Text = "GUI Keybind",
+local sectiontestx = BossTab.Section({
+	Text = "General",
 })
 
-local uikeybind = ConfigTab.Dropdown({
-    Text = "Selection",
+local AutoBossToggle = BossTab.Toggle({
+    Text = "Auto-Boss",
     Callback = function(Value)
-        print(Value)
+        if Value then
+            getgenv().Bring = true
+
+            if workspace.Objects.Spawns.BossSpawn:FindFirstChild("QuestMarker") then
+                local adornee = workspace.Objects.Spawns.BossSpawn:FindFirstChild("QuestMarker").Adornee
+                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = adornee.CFrame
+            end
+
+            -- Function to bring the player around mobs
+            local function bringPlayerAroundMobs()
+                local localPlayer = game.Players.LocalPlayer
+                local jogador = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+                if jogador then
+                    for _, mob in pairs(workspace.Objects.Mobs:GetChildren()) do
+                        if mob:FindFirstChild("HumanoidRootPart") then
+                            -- Calculate position 5 studs behind the mob
+                            local mobPosition = mob.HumanoidRootPart.Position
+                            local mobLookVector = mob.HumanoidRootPart.CFrame.LookVector
+                            local novaPosicao = mobPosition - mobLookVector * 6 -- Adjust distance here (currently 5 studs)
+                            
+                            mob.Humanoid.Health = 0
+                            -- Teleport the player
+                            jogador.CFrame = CFrame.new(novaPosicao)
+                        end
+                    end
+                end
+            end
+
+            -- Continuously bring the player around mobs
+            while getgenv().Bring do
+                bringPlayerAroundMobs()
+                task.wait() -- Adjust the wait time as needed
+            end
+        else
+            getgenv().Bring = false
+        end
+    end,
+    Enabled = getgenv().AutoBossToggle
+})
+
+local AutoReplayToggle = BossTab.Toggle({
+    Text = "Auto-Replay",
+    Callback = function(Value)
+        if Value then
+            getgenv().autoreplay = true
+            while getgenv().autoreplay == true do
+                if game:GetService("Players").LocalPlayer.PlayerGui.ReadyScreen.Enabled == true then
+                    local chest = workspace.Objects["Drops"]:FindFirstChild("Chest")
+                        if chest then
+                                print("claim that shit cuh")
+                        else
+                            if game:GetService("Players").LocalPlayer.PlayerGui.Loot.Enabled == false then
+                        task.wait(3)
+                        local button = game:GetService("Players").LocalPlayer.PlayerGui.ReadyScreen.Frame.Replay
+                        game:GetService("GuiService").SelectedObject = button
+                        game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+                        game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Return, false, game)
+                            end
+                            end
+                    else
+                end
+                task.wait(5)
+            end
+        else
+            getgenv().autoreplay = false
+        end
+    end,
+    Enabled = getgenv().AutoReplayToggle
+})
+
+local AutoCollectToggle = BossTab.Toggle({
+    Text = "Auto-Collect Chests",
+    Callback = function(Value)
+        getgenv().autocollectchest = Value
+        if getgenv().autocollectchest then
+            task.spawn(function()
+                while getgenv().autocollectchest do
+                    local chest = workspace.Objects["Drops"]:FindFirstChild("Chest")
+                if game:GetService("Players").LocalPlayer.PlayerGui.Loot.Enabled == false then
+                    if chest then
+                        local collectPrompt = chest:FindFirstChild("Collect")
+                        if collectPrompt then
+                            fireproximityprompt(collectPrompt, 1, false)
+                        end
+                    end
+                    elseif game:GetService("Players").LocalPlayer.PlayerGui.Loot.Enabled == true then
+                        local button = game:GetService("Players").LocalPlayer.PlayerGui.Loot.Frame.Flip
+                        game:GetService("GuiService").SelectedObject = button
+                        game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+                        game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Return, false, game)
+                    end
+                    task.wait() -- Add a short delay to prevent excessive resource usage
+                end
+            end)
+        end
+    end,
+    Enabled = getgenv().AutoCollectChestsToggle -- Default state of the toggle
+})
+
+
+local sectiontest = BossTab.Section({
+Text = "Boss Queue",
+})
+
+local bosstypedropdown = BossTab.Dropdown({
+    Text = "Boss Type",
+    Callback = function(Value)
+        getgenv().bosstype = Value
     end,
     Options = {
-        "RightShift",
-        "Insert",
-        "RightAlt"
-    },
-    Menu = {
-        Information = function(self)
-            X.Banner({
-                Text = "Test alert!"
-            })
-        end
+        "Finger Bearer",
+        "Ocean Curse",
+        "Soul Curse",
+        "Volcano Curse",
+        "Sorcerer Killer",
+        "Heian Imaginary Demon",
+        "Spawn of Rot",
+        "Cursed School",
+        "Yasohachi Bridge",
+        "Tokyo Subway",
+        "Eerie Farm",
+        "Detention Center",
+        "Consumables"
     }
+})
+
+local uikeybind = BossTab.Dropdown({
+    Text = "Boss Difficulty",
+    Callback = function(Value)
+        getgenv().bossdifficulty = Value
+    end,
+    Options = {
+        "Easy",
+        "Medium",
+        "Hard",
+        "Nightmare"
+    }
+})
+
+
+local G = BossTab.Button({
+    Text = "Start",
+    Callback = function()
+        local ohString1 = "Boss"
+        local ohString2 = getgenv().bosstype
+        local ohString3 = "whatever"
+        local ohString4 = getgenv().bossdifficulty
+        
+    game:GetService("ReplicatedStorage").Remotes.Server.Raids.CreateLobby:InvokeServer(ohString1, ohString2, ohString3, ohString4)
+    task.wait(0.25)
+    game:GetService("ReplicatedStorage").Remotes.Server.Raids.StartLobby:InvokeServer(ohString1)
+    end
+})
+
+local ConfigTab = X.New({
+    Title = "Config"
+})
+
+
+local AutoCollectToggle = ConfigTab.Toggle({
+    Text = "save that shit (only works on bosses for now)",
+    Callback = function(Value)
+        getgenv().configsaved = Value
+        if getgenv().configsaved then
+            task.spawn(function()
+                while getgenv().configsaved do
+
+                    task.wait()
+                end
+            end)
+        end
+    end,
+    Enabled = true
 })
