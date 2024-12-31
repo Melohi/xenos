@@ -1,18 +1,25 @@
 local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Melohi/v3rm/refs/heads/main/materialuiexperiment"))()
 local player = game:GetService("Players").LocalPlayer
 
+getgenv().Theme = "Light"
+
 local X = Material.Load({
     Title = "xenos",
     Style = 2,
     SizeX = 500,
     SizeY = 350,
-    Theme = "Jester",
+    Theme = getgenv().Theme,
     ColorOverrides = {}
 })
 
 local CombatTab = X.New({
     Title = "Combat"
 })
+
+local sectiontest = CombatTab.Section({
+	Text = "Quests",
+})
+
 local QuestDropdown = CombatTab.Dropdown({
     Text = "Quest Type",
     Callback = function(Value)
@@ -172,6 +179,10 @@ local QuestToggle = CombatTab.Toggle({
     Enabled = false
 })
 
+local sectiontest = CombatTab.Section({
+	Text = "General",
+})
+
 local KillAura = CombatTab.Toggle({
     Text = "Kill-Aura",
     Callback = function(Value)
@@ -222,6 +233,10 @@ local PlayerTab = X.New({
     Title = "Player"
 })
 
+local sectiontest = PlayerTab.Section({
+	Text = "LocalPlayer",
+})
+
 local WalkSpeedSlider = PlayerTab.Slider({
 	Text = "WalkSpeed",
 	Callback = function(Value)
@@ -240,6 +255,10 @@ local JumpPowerSlider = PlayerTab.Slider({
 	Min = 77,
 	Max = 350,
 	Def = 40
+})
+
+local sectiontest = PlayerTab.Section({
+	Text = "Auto-Collect",
 })
 
 local ACDropdown = PlayerTab.Dropdown({
@@ -290,8 +309,12 @@ local ACToggle = PlayerTab.Toggle({
     Enabled = false
 })
 
-local Y = X.New({
+local CustomizationTab = X.New({
     Title = "Customization"
+})
+
+local sectiontest = CustomizationTab.Section({
+	Text = "Auto-Spin",
 })
 
 local innateTechniques = {
@@ -371,92 +394,73 @@ local function updateInnateUI()
     game:GetService("Players").LocalPlayer.PlayerGui.Customization.Frame.List.Innates["4"].Frame.TextLabel.TextColor3 = innate4Color
 end
 
-local function handleDropdownSelection(selectedValues, globalVarName)
-    if type(selectedValues) == "table" then
-        getgenv()[globalVarName] = selectedValues
-        print(table.concat(selectedValues, ", "))
-    else
-        getgenv()[globalVarName] = {selectedValues}
-        print(selectedValues)
-    end
-end
+local selectedSlots = {} -- Table to store the selected slots
+local desiredInnates = {} -- Table to store desired innates for each slot
 
-local function createDropdown(parent, text, globalVarName)
-    local options = {}
-    for _, technique in ipairs(innateTechniques) do
-        table.insert(options, technique.name)
-    end
-
-    return parent.Dropdown({
-        Text = text,
-        MultiSelect = true,
-        Callback = function(Value)
-            handleDropdownSelection(Value, globalVarName)
-        end,
-        Options = options,
-        OptionColors = function(option)
-            for _, technique in ipairs(innateTechniques) do
-                if technique.name == option then
-                    return tierColors[technique.tier]
-                end
-            end
-            return Color3.fromRGB(255, 255, 255)
+local SlotsDropdown = CustomizationTab.Dropdown({
+    Text = "Innate Slot",
+    MultiSelect = true,
+    Callback = function(Value)
+        if type(Value) == "table" then
+            selectedSlots = Value -- Update the selected slots
+            print("Selected Slots: " .. table.concat(selectedSlots, ", "))
+        else
+            print("Single Slot Selected: " .. Value)
+            selectedSlots = {Value}
         end
-    })
-end
+    end,
+    Options = {
+        "1",
+        "2",
+        "3",
+        "4"
+    }
+})
 
-createDropdown(Y, "Desired Innate 1", "desiredInnates1")
-createDropdown(Y, "Desired Innate 2", "desiredInnates2")
-createDropdown(Y, "Desired Innate 3", "desiredInnates3")
-createDropdown(Y, "Desired Innate 4", "desiredInnates4")
+local InnateDropdown = CustomizationTab.Dropdown({
+    Text = "Innate Selection",
+    MultiSelect = true,
+    Callback = function(Value)
+        if type(Value) == "table" then
+            desiredInnates = Value -- Update the desired innates
+            print("Desired Innates: " .. table.concat(desiredInnates, ", "))
+        else
+            print("Single Innate Selected: " .. Value)
+            desiredInnates = {Value}
+        end
+    end,
+    Options = (function()
+        local options = {}
+        for _, technique in ipairs(innateTechniques) do
+            table.insert(options, technique.name)
+        end
+        return options
+    end)()
+})
 
-local B = Y.Toggle({
+local B = CustomizationTab.Toggle({
     Text = "Auto-Spin",
     Callback = function(Value)
         if Value then
             getgenv().autospin = true
             while getgenv().autospin do
-                local innate1Value = game:GetService("Players").LocalPlayer.ReplicatedData.innates["1"].Value
-                local innate2Value = game:GetService("Players").LocalPlayer.ReplicatedData.innates["2"].Value
-                local innate3Value = game:GetService("Players").LocalPlayer.ReplicatedData.innates["3"].Value
-                local innate4Value = game:GetService("Players").LocalPlayer.ReplicatedData.innates["4"].Value
+                for _, slot in ipairs(selectedSlots) do
+                    local innateValue = game:GetService("Players").LocalPlayer.ReplicatedData.innates[tostring(slot)].Value
+                    local matched = table.find(desiredInnates, innateValue)
 
-                local innate1Matched = table.find(getgenv().desiredInnates1, innate1Value)
-                local innate2Matched = table.find(getgenv().desiredInnates2, innate2Value)
-                local innate3Matched = table.find(getgenv().desiredInnates3, innate3Value)
-                local innate4Matched = table.find(getgenv().desiredInnates4, innate4Value)
-
-                if innate1Matched and innate2Matched and innate3Matched and innate4Matched then
-                    print("All desired innates obtained!")
-                    break
+                    if not matched then
+                        game:GetService("ReplicatedStorage").Remotes.Server.Data.InnateSpin:InvokeServer(tonumber(slot))
+                        print("Spinning for Innate Slot " .. slot .. ": Current Value - " .. innateValue)
+                    else
+                        print("Desired innate found for Slot " .. slot .. ": " .. innateValue)
+                        game:GetService("Players").LocalPlayer.PlayerGui.Customization.Frame.List.Innates["1"].Frame.TextLabel.Text = game:GetService("Players").LocalPlayer.ReplicatedData.innates["1"].Value
+                        game:GetService("Players").LocalPlayer.PlayerGui.Customization.Frame.List.Innates["2"].Frame.TextLabel.Text = game:GetService("Players").LocalPlayer.ReplicatedData.innates["2"].Value
+                        game:GetService("Players").LocalPlayer.PlayerGui.Customization.Frame.List.Innates["3"].Frame.TextLabel.Text = game:GetService("Players").LocalPlayer.ReplicatedData.innates["3"].Value
+                        game:GetService("Players").LocalPlayer.PlayerGui.Customization.Frame.List.Innates["4"].Frame.TextLabel.Text = game:GetService("Players").LocalPlayer.ReplicatedData.innates["4"].Value
+                    end
                 end
 
-                if not innate1Matched then
-                    game:GetService("ReplicatedStorage").Remotes.Server.Data.InnateSpin:InvokeServer(1)
-                    print("Spinning for Innate 1: Current Value - " .. innate1Value)
-                end
-
-                if not innate2Matched then
-                    game:GetService("ReplicatedStorage").Remotes.Server.Data.InnateSpin:InvokeServer(2)
-                    print("Spinning for Innate 2: Current Value - " .. innate2Value)
-                end
-
-                if not innate3Matched then
-                    game:GetService("ReplicatedStorage").Remotes.Server.Data.InnateSpin:InvokeServer(3)
-                    print("Spinning for Innate 3: Current Value - " .. innate3Value)
-                end
-
-                if not innate4Matched then
-                    game:GetService("ReplicatedStorage").Remotes.Server.Data.InnateSpin:InvokeServer(4)
-                    print("Spinning for Innate 4: Current Value - " .. innate4Value)
-                end
-
-                game:GetService("Players").LocalPlayer.PlayerGui.Customization.Frame.List.Innates["1"].Frame.TextLabel.Text = game:GetService("Players").LocalPlayer.ReplicatedData.innates["1"].Value
-                game:GetService("Players").LocalPlayer.PlayerGui.Customization.Frame.List.Innates["2"].Frame.TextLabel.Text = game:GetService("Players").LocalPlayer.ReplicatedData.innates["2"].Value
-                game:GetService("Players").LocalPlayer.PlayerGui.Customization.Frame.List.Innates["3"].Frame.TextLabel.Text = game:GetService("Players").LocalPlayer.ReplicatedData.innates["3"].Value
-                game:GetService("Players").LocalPlayer.PlayerGui.Customization.Frame.List.Innates["4"].Frame.TextLabel.Text = game:GetService("Players").LocalPlayer.ReplicatedData.innates["4"].Value
-                updateInnateUI()
-                task.wait(0.02)
+                task.wait() -- Adjust delay as needed
             end
         else
             getgenv().autospin = false
@@ -465,7 +469,8 @@ local B = Y.Toggle({
     Enabled = false
 })
 
-local C = Y.Toggle({
+
+local C = CustomizationTab.Toggle({
     Text = "Temporarily Unlock Innate 3 & 4",
     Callback = function(Value)
         if Value then
@@ -483,7 +488,11 @@ local C = Y.Toggle({
     Enabled = false
 })
 
-local N = Y.Button({
+local sectiontest = CustomizationTab.Section({
+	Text = "Customization",
+})
+
+local N = CustomizationTab.Button({
     Text = "Redeem All Codes",
     Callback = function()
         local codetable = {"TOP_SECRET", "RELEASE", "MERRY_CHRISTMAS", "SHUTDOWN_AGAIN","BACK_UP_AGAIN"}
@@ -495,7 +504,7 @@ local N = Y.Button({
     end,
 })
 
-local G = Y.Button({
+local G = CustomizationTab.Button({
     Text = "Data Wipe & Rejoin",
     Callback = function()
         local args = {
@@ -516,6 +525,10 @@ local G = Y.Button({
 
 local TeleportTab = X.New({
     Title = "Teleports"
+})
+
+local sectiontest = TeleportTab.Section({
+	Text = "NPCs",
 })
 
 local npcList = {
@@ -565,4 +578,27 @@ end
 
 local ConfigTab = X.New({
     Title = "Settings"
+})
+
+local sectiontest = ConfigTab.Section({
+	Text = "GUI Keybind",
+})
+
+local uikeybind = ConfigTab.Dropdown({
+    Text = "Selection",
+    Callback = function(Value)
+        print(Value)
+    end,
+    Options = {
+        "RightShift",
+        "Insert",
+        "RightAlt"
+    },
+    Menu = {
+        Information = function(self)
+            X.Banner({
+                Text = "Test alert!"
+            })
+        end
+    }
 })
