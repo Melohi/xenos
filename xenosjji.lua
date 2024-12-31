@@ -1,5 +1,7 @@
 local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Melohi/v3rm/refs/heads/main/materialuiexperiment"))()
 local player = game:GetService("Players").LocalPlayer
+getgenv().Theme = "Light"
+
 local X = Material.Load({
     Title = "xenos",
     Style = 2,
@@ -766,7 +768,7 @@ local AutoBossToggle = BossTab.Toggle({
             getgenv().Bring = false
         end
     end,
-    Enabled = getgenv().AutoBossToggle
+    Enabled = false
 })
 
 local AutoReplayToggle = BossTab.Toggle({
@@ -796,7 +798,7 @@ local AutoReplayToggle = BossTab.Toggle({
             getgenv().autoreplay = false
         end
     end,
-    Enabled = getgenv().AutoReplayToggle
+    Enabled = false
 })
 
 local AutoCollectToggle = BossTab.Toggle({
@@ -825,7 +827,7 @@ local AutoCollectToggle = BossTab.Toggle({
             end)
         end
     end,
-    Enabled = getgenv().AutoCollectChestsToggle -- Default state of the toggle
+    Enabled = false -- Default state of the toggle
 })
 
 
@@ -885,21 +887,4 @@ local G = BossTab.Button({
 
 local ConfigTab = X.New({
     Title = "Config"
-})
-
-
-local AutoCollectToggle = ConfigTab.Toggle({
-    Text = "save that shit (only works on bosses for now)",
-    Callback = function(Value)
-        getgenv().configsaved = Value
-        if getgenv().configsaved then
-            task.spawn(function()
-                while getgenv().configsaved do
-
-                    task.wait()
-                end
-            end)
-        end
-    end,
-    Enabled = true
 })
