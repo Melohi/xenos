@@ -1,4 +1,5 @@
-local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Melohi/v3rm/refs/heads/main/materialuiexperiment"))()
+
+local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Melohi/v3rm/02c4cdd904c0d9118fdfcdbcdd2cc25609cfa5a0/materialuiexperiment"))()
 local player = game:GetService("Players").LocalPlayer
 getgenv().Theme = "Light"
 
@@ -21,13 +22,15 @@ local sectiontest = CombatTab.Section({
 
 local QuestDropdown = CombatTab.Dropdown({
     Text = "Quest Type",
+    MultiSelect = false,
+    DefaultOptions = {"Normal"},
     Callback = function(Value)
         getgenv().QuestType = Value
     end,
     Options = {
         "Normal",
         "Modded"
-    }
+    },
 })
 
 local QuestDropdown = CombatTab.Dropdown({
@@ -201,7 +204,6 @@ local QuestToggle = CombatTab.Toggle({
 local sectiontest = CombatTab.Section({
 	Text = "General",
 })
-
 local KillAura = CombatTab.Toggle({
     Text = "Kill-Aura",
     Callback = function(Value)
@@ -210,23 +212,36 @@ local KillAura = CombatTab.Toggle({
             while getgenv().KillAura do
                 local player = game:GetService("Players").LocalPlayer
                 local character = player.Character
+                
                 if not character or not character:FindFirstChild("HumanoidRootPart") then
-                    task.wait(0.1)
+                    task.wait()
                 else
+                    -- Iterate through all mobs in the workspace
                     for _, mob in pairs(game:GetService("Workspace").Objects.Mobs:GetChildren()) do
-                        local mobHead = mob:FindFirstChild("Head")
                         local mobHRP = mob:FindFirstChild("HumanoidRootPart")
-                        if mobHead and mobHRP then
-                            local distance = (mobHRP.Position - character.HumanoidRootPart.Position).Magnitude
+                        local mobHumanoid = mob:FindFirstChild("Humanoid")
+
+                        if mobHRP and mobHumanoid then
+                            -- Calculate the distance between the player and the mob
+                            local mobPosition = mobHRP.Position
+                            local playerPosition = character.HumanoidRootPart.Position
+                            local distance = (playerPosition - mobPosition).Magnitude
+
+                            -- Only continue if the mob is within 100 studs of the player
                             if distance <= 100 then
+                                -- Move the mob towards the player
+                                local directionToPlayer = (playerPosition - mobPosition).unit  -- Get the direction vector
+                                mobHRP.CFrame = CFrame.new(mobPosition + directionToPlayer * 6)
+
+                                -- Damage the mob by setting health to 0 (Kill)
                                 pcall(function()
-                                    mobHead:Destroy()
+                                    mobHumanoid.Health = 0
                                 end)
                             end
                         end
                     end
                 end
-                task.wait(0.1)
+                task.wait() -- Small delay between each iteration
             end
         else
             getgenv().KillAura = false
@@ -326,7 +341,7 @@ local jowe = {
 
 local selectedTools = {}
 
-local toolsdropdown = PlayerTab.Dropdown({
+local StopItDawg = PlayerTab.Dropdown({
     Text = "Selection",
     MultiSelect = true,
     Callback = function(Value)
@@ -353,6 +368,7 @@ local toolsdropdown = PlayerTab.Dropdown({
         end
     }
 })
+
 local spawnedTools = {}
 
 local N = PlayerTab.Button({
@@ -365,6 +381,7 @@ local N = PlayerTab.Button({
 
         for _, toolName in ipairs(selectedTools) do
             if jowe[toolName] and jowe[toolName] ~= "" then
+
                 local Tool = Instance.new("Tool")
                 Tool.Name = toolName
                 Tool.TextureId = jowe[toolName]
@@ -392,26 +409,27 @@ local ClearButton = PlayerTab.Button({
             if tool and tool.Parent then
                 tool:Destroy()
                 print("Cleared tool: " .. tool.Name)
+
             end
         end
 
         spawnedTools = {}
-        print("All spawned tools have been cleared.")
     end,
 })
 
 local sectiontest = PlayerTab.Section({
 	Text = "Auto-Collect",
 })
-
 local ACDropdown = PlayerTab.Dropdown({
     Text = "Selection",
     MultiSelect = true,
     Callback = function(Value)
         if type(Value) == "table" then
+            getgenv().autocollectselection = Value
             print(table.concat(Value, ", "))
         else
             print(Value)
+            getgenv().autocollectselection = {Value} -- Convert single value to a table
         end
     end,
     Options = {
@@ -424,12 +442,56 @@ local ACDropdown = PlayerTab.Dropdown({
     }
 })
 
-
-local ACToggle = PlayerTab.Toggle({
+local AutoCollect = PlayerTab.Toggle({
     Text = "Auto-Collect",
     Callback = function(Value)
         if Value then
+            getgenv().autocollect = true
+            task.spawn(function()
+                local Players = game:GetService("Players")
+                local GuiService = game:GetService("GuiService")
+                local VirtualInputManager = game:GetService("VirtualInputManager")
+                local player = Players.LocalPlayer
+                local drops = workspace.Objects.Drops
+                
+                while getgenv().autocollect do
+                    -- Check if "Chests" is in the selection table
+                    if table.find(getgenv().autocollectselection, "Chests") then
+                        local lootGui = player.PlayerGui.Loot
+                        
+                        if not lootGui.Enabled then
+                            -- Check and collect chest
+                            local chest = drops:FindFirstChild("Chest")
+                            if chest then
+                                local collectPrompt = chest:FindFirstChild("Collect")
+                                if collectPrompt then
+                                    fireproximityprompt(collectPrompt, 1, false)
+                                end
+                            end
+                        else
+                            -- Handle loot UI
+                            local flipButton = lootGui.Frame.Flip
+                            GuiService.SelectedObject = flipButton
+                            
+                            -- Click flip button
+                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+                            task.wait(0.1) -- Small delay between key events
+                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
+                        end
+                    end
+                    
+                    -- You can add additional checks for other types, like "Items", "Drops", etc.
+                    if table.find(getgenv().autocollectselection, "Items") then
+                        -- Add item collection logic here if needed
+                    end
+                    
+                    -- Add similar checks for other types if needed...
+                    
+                    task.wait(0.5) -- Reduced delay while maintaining efficiency
+                end
+            end)
         else
+            getgenv().autocollect = false
         end
     end,
     Enabled = false
@@ -730,40 +792,39 @@ local sectiontestx = BossTab.Section({
 local AutoBossToggle = BossTab.Toggle({
     Text = "Auto-Boss",
     Callback = function(Value)
+ 
         if Value then
             getgenv().Bring = true
-
-            if workspace.Objects.Spawns.BossSpawn:FindFirstChild("QuestMarker") then
-                local adornee = workspace.Objects.Spawns.BossSpawn:FindFirstChild("QuestMarker").Adornee
-                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = adornee.CFrame
-            end
-
-            -- Function to bring the player around mobs
-            local function bringPlayerAroundMobs()
-                local localPlayer = game.Players.LocalPlayer
-                local jogador = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
-
-                if jogador then
-                    for _, mob in pairs(workspace.Objects.Mobs:GetChildren()) do
-                        if mob:FindFirstChild("HumanoidRootPart") then
-                            -- Calculate position 5 studs behind the mob
-                            local mobPosition = mob.HumanoidRootPart.Position
-                            local mobLookVector = mob.HumanoidRootPart.CFrame.LookVector
-                            local novaPosicao = mobPosition - mobLookVector * 6 -- Adjust distance here (currently 5 studs)
-                            
-                            mob.Humanoid.Health = 0
-                            -- Teleport the player
-                            jogador.CFrame = CFrame.new(novaPosicao)
-                        end
+            
+            task.spawn(function()
+                -- Initial teleport to boss spawn if exists
+                if workspace.Objects.Spawns:FindFirstChild("BossSpawn") then
+                    local adornee = workspace.Objects.Spawns.BossSpawn.QuestMarker.Adornee
+                    if adornee and game.Players.LocalPlayer.Character then
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = adornee.CFrame
                     end
                 end
-            end
 
-            -- Continuously bring the player around mobs
-            while getgenv().Bring do
-                bringPlayerAroundMobs()
-                task.wait() -- Adjust the wait time as needed
-            end
+                -- Main farming loop
+                while getgenv().Bring do
+                    local character = game.Players.LocalPlayer.Character
+                    local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
+                    
+                    if humanoidRootPart then
+                        for _, mob in pairs(workspace.Objects.Mobs:GetChildren()) do
+                            if mob:FindFirstChild("HumanoidRootPart") and mob:FindFirstChild("Humanoid") then
+                                local mobPosition = mob.HumanoidRootPart.Position
+                                local mobLookVector = mob.HumanoidRootPart.CFrame.LookVector
+                                local behindPosition = mobPosition - mobLookVector * 6
+                                
+                                mob.Humanoid.Health = 0
+                                humanoidRootPart.CFrame = CFrame.new(behindPosition)
+                            end
+                        end
+                    end
+                    task.wait()
+                end
+            end)
         else
             getgenv().Bring = false
         end
@@ -774,62 +835,37 @@ local AutoBossToggle = BossTab.Toggle({
 local AutoReplayToggle = BossTab.Toggle({
     Text = "Auto-Replay",
     Callback = function(Value)
+        getgenv().autoreplay = Value
+        
         if Value then
-            getgenv().autoreplay = true
-            while getgenv().autoreplay == true do
-                if game:GetService("Players").LocalPlayer.PlayerGui.ReadyScreen.Enabled == true then
-                    local chest = workspace.Objects["Drops"]:FindFirstChild("Chest")
-                        if chest then
-                                print("claim that shit cuh")
-                        else
-                            if game:GetService("Players").LocalPlayer.PlayerGui.Loot.Enabled == false then
-                        task.wait(3)
-                        local button = game:GetService("Players").LocalPlayer.PlayerGui.ReadyScreen.Frame.Replay
-                        game:GetService("GuiService").SelectedObject = button
-                        game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Return, false, game)
-                        game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Return, false, game)
-                            end
-                            end
-                    else
-                end
-                task.wait(5)
-            end
-        else
-            getgenv().autoreplay = false
-        end
-    end,
-    Enabled = false
-})
-
-local AutoCollectToggle = BossTab.Toggle({
-    Text = "Auto-Collect Chests",
-    Callback = function(Value)
-        getgenv().autocollectchest = Value
-        if getgenv().autocollectchest then
             task.spawn(function()
-                while getgenv().autocollectchest do
-                    local chest = workspace.Objects["Drops"]:FindFirstChild("Chest")
-                if game:GetService("Players").LocalPlayer.PlayerGui.Loot.Enabled == false then
-                    if chest then
-                        local collectPrompt = chest:FindFirstChild("Collect")
-                        if collectPrompt then
-                            fireproximityprompt(collectPrompt, 1, false)
+                while getgenv().autoreplay do
+                    local player = game:GetService("Players").LocalPlayer
+                    local readyScreen = player.PlayerGui.ReadyScreen
+                    local lootGui = player.PlayerGui.Loot
+                    
+                    if readyScreen.Enabled then
+                        local chest = workspace.Objects.Drops:FindFirstChild("Chest")
+                        
+                        if not chest and not lootGui.Enabled then
+                            task.wait(0.5)
+                            local replayButton = readyScreen.Frame.Replay
+                            
+                            -- Click replay button
+                            game:GetService("GuiService").SelectedObject = replayButton
+                            local vim = game:GetService("VirtualInputManager")
+                            vim:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+                            vim:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
                         end
                     end
-                    elseif game:GetService("Players").LocalPlayer.PlayerGui.Loot.Enabled == true then
-                        local button = game:GetService("Players").LocalPlayer.PlayerGui.Loot.Frame.Flip
-                        game:GetService("GuiService").SelectedObject = button
-                        game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Return, false, game)
-                        game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Return, false, game)
-                    end
-                    task.wait() -- Add a short delay to prevent excessive resource usage
+                    
+                    task.wait(0.5)
                 end
             end)
         end
     end,
-    Enabled = false -- Default state of the toggle
+    Enabled = false
 })
-
 
 local sectiontest = BossTab.Section({
 Text = "Boss Queue",
@@ -883,8 +919,4 @@ local G = BossTab.Button({
     task.wait(0.25)
     game:GetService("ReplicatedStorage").Remotes.Server.Raids.StartLobby:InvokeServer(ohString1)
     end
-})
-
-local ConfigTab = X.New({
-    Title = "Config"
 })
