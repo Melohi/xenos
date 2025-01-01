@@ -1,7 +1,5 @@
-
 local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Melohi/v3rm/02c4cdd904c0d9118fdfcdbcdd2cc25609cfa5a0/materialuiexperiment"))()
 local player = game:GetService("Players").LocalPlayer
-getgenv().Theme = "Light"
 
 local X = Material.Load({
     Title = "xenos",
