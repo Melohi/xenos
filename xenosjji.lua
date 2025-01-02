@@ -508,7 +508,7 @@ local AutoCollectToggle = PlayerTab.Toggle({
                             
                             -- Click flip button
                             VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
-                            task.wait(0.1) -- Small delay between key events
+                            task.wait() -- Small delay between key events
                             VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
                         end
                     end
@@ -520,7 +520,7 @@ local AutoCollectToggle = PlayerTab.Toggle({
                     
                     -- Add similar checks for other types if needed...
                     
-                    task.wait(0.5) -- Reduced delay while maintaining efficiency
+                    task.wait() -- Reduced delay while maintaining efficiency
                 end
             end)
         else
