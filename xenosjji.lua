@@ -1,6 +1,46 @@
-local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Melohi/v3rm/02c4cdd904c0d9118fdfcdbcdd2cc25609cfa5a0/materialuiexperiment"))()
+local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Melohi/v3rm/refs/heads/main/materialuiexperiment"))()
+local ConfigLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/Exunys/Config-Library/main/Main.lua"))()
 local player = game:GetService("Players").LocalPlayer
 
+local ConfigSettings = {
+  QuestDropdown = {"Normal"},
+  QuestTypeDropdown = {"Kill"},
+  QuestLevelDropdown = {"Level 60 - 120"},
+  QuestToggle = false,
+  AutoCompleteQuestToggle = false,
+  KillAuraToggle = false,
+  NoCooldownToggle = false,
+  AutoPromoteToggle = false,
+  SlotsDropdown = {"1","2"},
+  InnateDropdown = {"Infinity"},
+  AutoCollectDropdown = false,
+  AutoCollectToggle = false,
+  AutoBossToggle = false,
+  AutoReplayToggle = false,
+  AutoLoadSelectedConfig = false,
+  SelectedConfig = false,
+  TemporaryUnlockInnateToggle = false
+}
+
+local function LoadSettings()
+    local loaded = ConfigLibrary:LoadConfig("xenosjji/Config.json")
+    if loaded then
+        return loaded
+    end
+    return ConfigSettings -- return defaults if no saved config
+end
+
+local function fileOrFolderExists(path)
+    return not select(2, pcall(function() readfile(path) end)) -- Returns true if the file exists
+end
+
+if not fileOrFolderExists("xenosjji") then
+    ConfigLibrary:SaveConfig("xenosjji/Config.json", ConfigSettings)
+end
+
+local savedSettings = LoadSettings()
+
+if savedSettings then
 local X = Material.Load({
     Title = "xenos",
     Style = 2,
@@ -21,8 +61,9 @@ local sectiontest = CombatTab.Section({
 local QuestDropdown = CombatTab.Dropdown({
     Text = "Quest Type",
     MultiSelect = false,
-    DefaultOptions = {"Normal"},
+    DefaultOptions = ConfigSettings.QuestDropdown,
     Callback = function(Value)
+        ConfigSettings.QuestDropdown = Value
         getgenv().QuestType = Value
     end,
     Options = {
@@ -31,9 +72,11 @@ local QuestDropdown = CombatTab.Dropdown({
     },
 })
 
-local QuestDropdown = CombatTab.Dropdown({
+local QuestTypeDropdown = CombatTab.Dropdown({
     Text = "Quest",
+    DefaultSelection = ConfigSettings.QuestTypeDropdown,
     Callback = function(Value)
+        ConfigSettings.QuestTypeDropdown = Value
         getgenv().Quest = Value
         print(getgenv().Quest)
     end,
@@ -47,10 +90,11 @@ local QuestDropdown = CombatTab.Dropdown({
     }
 })
 
-local QuestDropdown = CombatTab.Dropdown({
+local QuestLevelDropdown = CombatTab.Dropdown({
     Text = "Quest Level",
+    DefaultSelection = ConfigSettings.QuestLevelDropdown,
     Callback = function(Value)
-        -- Set the global quest level and update quest details based on selected value
+        ConfigSettings.QuestLevelDropdown = Value
         getgenv().QuestLevel = Value
     end,
     Options = {
@@ -64,6 +108,7 @@ local QuestDropdown = CombatTab.Dropdown({
 local QuestToggle = CombatTab.Toggle({
     Text = "Auto-Quest",
     Callback = function(Value)
+        ConfigSettings.QuestToggle = Value
         if Value then
             getgenv().autoquest = true
             while getgenv().autoquest == true do
@@ -154,28 +199,27 @@ local QuestToggle = CombatTab.Toggle({
             getgenv().autoquest = false
         end
     end,
-    Enabled = false
+    Enabled = ConfigSettings.QuestToggle
 })
 
-local QuestToggle = CombatTab.Toggle({
+local AutoCompleteQuestToggle = CombatTab.Toggle({
     Text = "Auto-Complete-Quest",
     Callback = function(Value)
-        getgenv().autcompletequest = Value -- Set the toggle state
+        getgenv().autcompletequest = Value
+        ConfigSettings.AutoCompleteQuestToggle = Value
         if getgenv().autcompletequest then
-            task.spawn(function() -- Run in a separate thread
+            task.spawn(function()
                 while getgenv().autcompletequest do
                     local success, err = pcall(function()
                         local localPlayer = game.Players.LocalPlayer
                         local replicatedTempData = localPlayer:FindFirstChild("ReplicatedTempData")
                         local questData = replicatedTempData and replicatedTempData:FindFirstChild("quest")
 
-                        -- If no active quest, try to take one
                         if not questData then
-                            local args = {} -- Replace with the actual arguments for TakeQuest
+                            local args = {}
                             game:GetService("ReplicatedStorage").Remotes.Server.Data.TakeQuest:InvokeServer(args)
                         end
 
-                        -- Move to the quest marker
                         local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
                         local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
 
@@ -191,20 +235,22 @@ local QuestToggle = CombatTab.Toggle({
                         warn("Error in Auto-Complete-Quest: " .. tostring(err))
                     end
 
-                    task.wait(0.5) -- Add a short delay to avoid excessive execution
+                    task.wait(0.5)
                 end
             end)
         end
     end,
-    Enabled = false -- Default state
+    Enabled = ConfigSettings.AutoCompleteQuestToggle
 })
 
 local sectiontest = CombatTab.Section({
 	Text = "General",
 })
-local KillAura = CombatTab.Toggle({
+
+local KillAuraToggle = CombatTab.Toggle({
     Text = "Kill-Aura",
     Callback = function(Value)
+        ConfigSettings.KillAuraToggle = Value
         if Value then
             getgenv().KillAura = true
             while getgenv().KillAura do
@@ -245,20 +291,21 @@ local KillAura = CombatTab.Toggle({
             getgenv().KillAura = false
         end
     end,
-    Enabled = false
+    Enabled = ConfigSettings.KillAuraToggle
 })
 
 
 local NoCooldownToggle = CombatTab.Toggle({
     Text = "No Ability Cooldown",
     Callback = function(Value)
+        ConfigSettings.NoCooldownToggle = Value
         if Value then
             game:GetService("ReplicatedStorage").Remotes.Server.Combat.Skill:FireServer("0 COOLDOWN FOR DEBUGGING")
-        else
             print('irreversible!')
+        else
         end
     end,
-    Enabled = false
+    Enabled = ConfigSettings.NoCooldownToggle
 })
 
 local PlayerTab = X.New({
@@ -268,27 +315,6 @@ local PlayerTab = X.New({
 local sectiontest = PlayerTab.Section({
 	Text = "LocalPlayer",
 })
-
-local RejoinAfterKickToggle = PlayerTab.Toggle({
-    Text = "Rejoin on kick",
-    Callback = function(Value)
-        if Value then
-            getgenv().rejoinafterkick = true
-            print("Rejoin after kick is enabled.")  -- Debug line
-            game.Players.PlayerRemoving:Connect(function(plr)
-                print("PlayerRemoving event triggered.")  -- Debug line
-                if plr == game.Players.LocalPlayer and getgenv().rejoinafterkick then
-                    print("Kicked, teleporting back.")  -- Debug line
-                    game:GetService('TeleportService'):Teleport(game.PlaceId)
-                end
-            end)
-        else
-            getgenv().rejoinafterkick = false
-        end
-    end,
-    Enabled = false
-})
-
 
 local WalkSpeedSlider = PlayerTab.Slider({
 	Text = "WalkSpeed",
@@ -418,16 +444,21 @@ local ClearButton = PlayerTab.Button({
 local sectiontest = PlayerTab.Section({
 	Text = "Auto-Collect",
 })
-local ACDropdown = PlayerTab.Dropdown({
+
+local AutoCollectDropdown = PlayerTab.Dropdown({
     Text = "Selection",
     MultiSelect = true,
+    DefaultSelection = ConfigSettings.AutoCollectDropdown,
     Callback = function(Value)
+        ConfigSettings.AutoCollectDropdown = Value
         if type(Value) == "table" then
             getgenv().autocollectselection = Value
+            ConfigSettings.AutoPromoteToggle = Value
             print(table.concat(Value, ", "))
         else
             print(Value)
             getgenv().autocollectselection = {Value} -- Convert single value to a table
+            ConfigSettings.AutoPromoteToggle = Value
         end
     end,
     Options = {
@@ -440,9 +471,10 @@ local ACDropdown = PlayerTab.Dropdown({
     }
 })
 
-local AutoCollect = PlayerTab.Toggle({
+local AutoCollectToggle = PlayerTab.Toggle({
     Text = "Auto-Collect",
     Callback = function(Value)
+        ConfigSettings.AutoCollectToggle = Value
         if Value then
             getgenv().autocollect = true
             task.spawn(function()
@@ -452,8 +484,11 @@ local AutoCollect = PlayerTab.Toggle({
                 local player = Players.LocalPlayer
                 local drops = workspace.Objects.Drops
                 
+                -- Ensure autocollectselection is a table
+                getgenv().autocollectselection = getgenv().autocollectselection or {}
+                
                 while getgenv().autocollect do
-                    -- Check if "Chests" is in the selection table
+                    -- Check if "Chests" exists in autocollectselection (now guaranteed to be a table)
                     if table.find(getgenv().autocollectselection, "Chests") then
                         local lootGui = player.PlayerGui.Loot
                         
@@ -492,24 +527,26 @@ local AutoCollect = PlayerTab.Toggle({
             getgenv().autocollect = false
         end
     end,
-    Enabled = false
+    Enabled = ConfigSettings.AutoCollectToggle
 })
 
-local ACToggle = PlayerTab.Toggle({
+
+local AutoPromoteToggle = PlayerTab.Toggle({
     Text = "Auto-Promote",
     Callback = function(Value)
+        ConfigSettings.AutoPromoteToggle = Value
         if Value then
             getgenv().autopromote = true
             while getgenv().autopromote do
                 local ohString1 = "Clan Head Jujutsu High"
                 local ohString2 = "Promote"
                 game:GetService("ReplicatedStorage").Remotes.Server.Dialogue.GetResponse:InvokeServer(ohString1, ohString2)
-                task.wait(5)
+                task.wait(1)
             end
         else
         end
     end,
-    Enabled = false
+    Enabled = ConfigSettings.AutoPromoteToggle
 })
 
 local CustomizationTab = X.New({
@@ -602,8 +639,10 @@ local desiredInnates = {} -- Table to store desired innates for each slot
 
 local SlotsDropdown = CustomizationTab.Dropdown({
     Text = "Innate Slot",
-    MultiSelect = true,
+    MultiSelect = false,
+    DefaultSelection = ConfigSettings.SlotsDropdown,
     Callback = function(Value)
+        ConfigSettings.SlotsDropdown = Value
         if type(Value) == "table" then
             selectedSlots = Value -- Update the selected slots
             print("Selected Slots: " .. table.concat(selectedSlots, ", "))
@@ -623,7 +662,9 @@ local SlotsDropdown = CustomizationTab.Dropdown({
 local InnateDropdown = CustomizationTab.Dropdown({
     Text = "Innate Selection",
     MultiSelect = true,
+    DefaultSelection = ConfigSettings.InnateDropdown,
     Callback = function(Value)
+        ConfigSettings.InnateDropdown = Value
         if type(Value) == "table" then
             desiredInnates = Value -- Update the desired innates
             print("Desired Innates: " .. table.concat(desiredInnates, ", "))
@@ -672,10 +713,10 @@ local B = CustomizationTab.Toggle({
     Enabled = false
 })
 
-
-local C = CustomizationTab.Toggle({
+local TemporaryUnlockInnateToggle = CustomizationTab.Toggle({
     Text = "Temporarily Unlock Innate 3 & 4",
     Callback = function(Value)
+        ConfigSettings.TemporaryUnlockInnateToggle = Value
         if Value then
             game:GetService("Players").LocalPlayer.PlayerGui.Customization.Frame.List.Innates["3"].Button.Visible = true
             game:GetService("Players").LocalPlayer.PlayerGui.Customization.Frame.List.Innates["3"].GamepassLocked.Visible = false
@@ -688,7 +729,7 @@ local C = CustomizationTab.Toggle({
             game:GetService("Players").LocalPlayer.PlayerGui.Customization.Frame.List.Innates["4"].GamepassLocked.Visible = true
         end
     end,
-    Enabled = false
+    Enabled = ConfigSettings.TemporaryUnlockInnateToggle
 })
 
 local sectiontest = CustomizationTab.Section({
@@ -790,51 +831,59 @@ local sectiontestx = BossTab.Section({
 local AutoBossToggle = BossTab.Toggle({
     Text = "Auto-Boss",
     Callback = function(Value)
- 
+        -- Set the global 'Bring' variable based on the toggle state
+        getgenv().Bring = Value
+        ConfigSettings.AutoReplayToggle = Value
+
         if Value then
-            getgenv().Bring = true
-            
             task.spawn(function()
-                -- Initial teleport to boss spawn if exists
-                if workspace.Objects.Spawns:FindFirstChild("BossSpawn") then
-                    local adornee = workspace.Objects.Spawns.BossSpawn.QuestMarker.Adornee
-                    if adornee and game.Players.LocalPlayer.Character then
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = adornee.CFrame
+                -- Initial teleport to boss spawn if it exists
+                local bossSpawn = workspace.Objects.Spawns:FindFirstChild("BossSpawn")
+                if bossSpawn then
+                    local adornee = bossSpawn.QuestMarker and bossSpawn.QuestMarker.Adornee
+                    local playerCharacter = game.Players.LocalPlayer.Character
+                    if adornee and playerCharacter then
+                        playerCharacter.HumanoidRootPart.CFrame = adornee.CFrame
                     end
                 end
 
                 -- Main farming loop
                 while getgenv().Bring do
-                    local character = game.Players.LocalPlayer.Character
-                    local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
-                    
+                    local playerCharacter = game.Players.LocalPlayer.Character
+                    local humanoidRootPart = playerCharacter and playerCharacter:FindFirstChild("HumanoidRootPart")
+
                     if humanoidRootPart then
-                        for _, mob in pairs(workspace.Objects.Mobs:GetChildren()) do
-                            if mob:FindFirstChild("HumanoidRootPart") and mob:FindFirstChild("Humanoid") then
-                                local mobPosition = mob.HumanoidRootPart.Position
-                                local mobLookVector = mob.HumanoidRootPart.CFrame.LookVector
+                        for _, mob in ipairs(workspace.Objects.Mobs:GetChildren()) do
+                            local mobHumanoid = mob:FindFirstChild("Humanoid")
+                            local mobRootPart = mob:FindFirstChild("HumanoidRootPart")
+
+                            if mobRootPart and mobHumanoid then
+                                local mobPosition = mobRootPart.Position
+                                local mobLookVector = mobRootPart.CFrame.LookVector
                                 local behindPosition = mobPosition - mobLookVector * 6
-                                
-                                mob.Humanoid.Health = 0
+
+                                mobHumanoid.Health = 0
                                 humanoidRootPart.CFrame = CFrame.new(behindPosition)
                             end
                         end
                     end
-                    task.wait()
+                    task.wait() -- Avoid CPU overload
                 end
             end)
         else
+            -- Stop the farming loop when toggled off
             getgenv().Bring = false
         end
     end,
-    Enabled = false
+    Enabled = ConfigSettings.AutoBossToggle
 })
+
 
 local AutoReplayToggle = BossTab.Toggle({
     Text = "Auto-Replay",
     Callback = function(Value)
         getgenv().autoreplay = Value
-        
+        ConfigSettings.AutoReplayToggle = Value
         if Value then
             task.spawn(function()
                 while getgenv().autoreplay do
@@ -862,7 +911,7 @@ local AutoReplayToggle = BossTab.Toggle({
             end)
         end
     end,
-    Enabled = false
+    Enabled = ConfigSettings.AutoReplayToggle
 })
 
 local sectiontest = BossTab.Section({
@@ -918,3 +967,142 @@ local G = BossTab.Button({
     game:GetService("ReplicatedStorage").Remotes.Server.Raids.StartLobby:InvokeServer(ohString1)
     end
 })
+
+
+local SettingsTab = X.New({
+    Title = "Settings"
+})
+
+local sectiontestx = SettingsTab.Section({
+	Text = "Config",
+})
+
+local function RefreshConfigList(folder)
+    local list = listfiles(folder)
+
+    local out = {}
+    for i = 1, #list do
+        local file = list[i]
+        if file:sub(-5) == ".json" then
+            local pos = file:find(".json", 1, true)
+            local start = pos
+
+            local char = file:sub(pos, pos)
+            while char ~= "/" and char ~= "\\" and char ~= "" do
+                pos = pos - 1
+                char = file:sub(pos, pos)
+            end
+
+            if char == "/" or char == "\\" then
+                local name = file:sub(pos + 1, start - 1)
+                if name ~= "options" then
+                    table.insert(out, name)
+                end
+            end
+        end
+    end
+
+    return out
+end
+
+-- Path to the folder containing settings
+local folder = "xenosjji"
+local configFiles = RefreshConfigList(folder)
+
+-- Create the dropdown
+local ConfigDropdown = SettingsTab.Dropdown({
+    Text = "Selection",
+    Callback = function(Value)
+        getgenv().selectedfile = Value
+    end,
+    Options = configFiles
+})
+
+local configname = SettingsTab.TextField({
+	Text = "Config Name",
+	Callback = function(Value)
+		getgenv().configname = Value
+	end,
+})
+
+local G = SettingsTab.Button({
+    Text = "Create Config",
+    Callback = function()
+        ConfigLibrary:SaveConfig("xenosjji/" .. getgenv().configname .. ".json", ConfigSettings)
+        print("done cuh")
+    end
+})
+
+local G = SettingsTab.Button({
+    Text = "Load Config",
+    Callback = function()
+        if not getgenv().selectedfile then
+            warn("No file selected!")
+            return
+        end
+
+        -- Construct the file path and read its contents
+        local configPath = "xenosjji/" .. getgenv().selectedfile .. ".json"  -- Specify the correct file path
+        local configContent
+        local success, errorMessage = pcall(function()
+            configContent = readfile(configPath)  -- Read the file content
+        end)
+
+        if not success then
+            warn("Error reading file: " .. errorMessage)
+            return
+        end
+
+        -- Decode the JSON content into a Lua table
+        local configData
+        success, errorMessage = pcall(function()
+            configData = game:GetService("HttpService"):JSONDecode(configContent)  -- Decode JSON
+        end)
+
+        if not success then
+            warn("Error decoding JSON: " .. errorMessage)
+            return
+        end
+
+        QuestToggle:SetState(configData.QuestToggle)
+        AutoCompleteQuestToggle:SetState(configData.AutoCompleteQuestToggle)
+        KillAuraToggle:SetState(configData.KillAuraToggle)
+        NoCooldownToggle:SetState(configData.NoCooldownToggle)
+        AutoPromoteToggle:SetState(configData.AutoPromoteToggle)
+        AutoCollectToggle:SetState(configData.AutoCollectToggle)
+        AutoBossToggle:SetState(configData.AutoBossToggle)
+        AutoReplayToggle:SetState(configData.AutoReplayToggle)
+        AutoLoadSelectedConfig:SetState(configData.AutoLoadSelectedConfig)
+        SelectedConfig:SetState(configData.SelectedConfig)
+        TemporaryUnlockInnateToggle:SetState(configData.TemporaryUnlockInnateToggle)
+    end
+})
+
+local G = SettingsTab.Button({
+    Text = "Save Config",
+    Callback = function()
+        ConfigLibrary:SaveConfig("xenosjji/" .. getgenv().selectedfile .. ".json", ConfigSettings)
+        print("saved")
+    end
+})
+
+-- Assuming ConfigDropdown is an instance of your dropdown library
+local G = SettingsTab.Button({
+    Text = "Refresh Config List",
+    Callback = function()
+    local IWILLDETROYYOU = game:GetService("CoreGui").xenos.MainFrame.Content.SETTINGS.Dropdown.Content:GetChildren()
+
+    for _, child in pairs(IWILLDETROYYOU) do
+        if child:IsA("ImageButton") then
+        child:Destroy()
+        end
+    end
+
+        local configFiles = RefreshConfigList("xenosjji")
+
+        ConfigDropdown:SetOptions(configFiles)
+
+        ConfigDropdown:Refresh()
+    end
+})
+end
