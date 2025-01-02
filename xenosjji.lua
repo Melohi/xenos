@@ -1,20 +1,18 @@
-local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Melohi/v3rm/refs/heads/main/materialuiexperiment"))()
+local Material = loadstring(game:HttpGet("https://raw.githubusercontent.com/Melohi/v3rm/b8d8ff676abfa922e18e0b4776d729b0d3a989e2/materialuiexperiment"))()
 local ConfigLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/Exunys/Config-Library/main/Main.lua"))()
 local player = game:GetService("Players").LocalPlayer
 
 local ConfigSettings = {
-  QuestDropdown = {"Normal"},
+  QuestDropdown = {"Modded"},
   QuestTypeDropdown = {"Kill"},
-  QuestLevelDropdown = {"Level 60 - 120"},
+  QuestLevelDropdown = {"Level 180 - 240+"},
   QuestToggle = false,
   AutoCompleteQuestToggle = false,
   KillAuraToggle = false,
   NoCooldownToggle = false,
   AutoPromoteToggle = false,
-  SlotsDropdown = {"1","2"},
-  InnateDropdown = {"Infinity"},
-  AutoCollectDropdown = false,
-  AutoCollectToggle = false,
+  AutoCollectChestsToggle = false,
+  AutoCollectDropsToggle = false,
   AutoBossToggle = false,
   AutoReplayToggle = false,
   AutoLoadSelectedConfig = false,
@@ -23,7 +21,7 @@ local ConfigSettings = {
 }
 
 local function LoadSettings()
-    local loaded = ConfigLibrary:LoadConfig("xenosjji/Config.json")
+    local loaded = ConfigLibrary:LoadConfig("xenosjji/" .. getgenv().selectedfile)
     if loaded then
         return loaded
     end
@@ -35,7 +33,7 @@ local function fileOrFolderExists(path)
 end
 
 if not fileOrFolderExists("xenosjji") then
-    ConfigLibrary:SaveConfig("xenosjji/Config.json", ConfigSettings)
+    ConfigLibrary:SaveConfig("xenosjji/" .. getgenv().selectedfile, ConfigSettings)
 end
 
 local savedSettings = LoadSettings()
@@ -56,6 +54,7 @@ local CombatTab = X.New({
 
 local sectiontest = CombatTab.Section({
 	Text = "Quests",
+
 })
 
 local QuestDropdown = CombatTab.Dropdown({
@@ -74,7 +73,8 @@ local QuestDropdown = CombatTab.Dropdown({
 
 local QuestTypeDropdown = CombatTab.Dropdown({
     Text = "Quest",
-    DefaultSelection = ConfigSettings.QuestTypeDropdown,
+    MultiSelect = false,
+    DefaultOptions = ConfigSettings.QuestTypeDropdown,
     Callback = function(Value)
         ConfigSettings.QuestTypeDropdown = Value
         getgenv().Quest = Value
@@ -92,7 +92,8 @@ local QuestTypeDropdown = CombatTab.Dropdown({
 
 local QuestLevelDropdown = CombatTab.Dropdown({
     Text = "Quest Level",
-    DefaultSelection = ConfigSettings.QuestLevelDropdown,
+    MultiSelect = false,
+    DefaultOptions = ConfigSettings.QuestLevelDropdown,
     Callback = function(Value)
         ConfigSettings.QuestLevelDropdown = Value
         getgenv().QuestLevel = Value
@@ -445,89 +446,52 @@ local sectiontest = PlayerTab.Section({
 	Text = "Auto-Collect",
 })
 
-local AutoCollectDropdown = PlayerTab.Dropdown({
-    Text = "Selection",
-    MultiSelect = true,
-    DefaultSelection = ConfigSettings.AutoCollectDropdown,
+local AutoCollectChestsToggle = PlayerTab.Toggle({
+    Text = "Auto-Collect Chests",
     Callback = function(Value)
-        ConfigSettings.AutoCollectDropdown = Value
-        if type(Value) == "table" then
-            getgenv().autocollectselection = Value
-            ConfigSettings.AutoPromoteToggle = Value
-            print(table.concat(Value, ", "))
-        else
-            print(Value)
-            getgenv().autocollectselection = {Value} -- Convert single value to a table
-            ConfigSettings.AutoPromoteToggle = Value
-        end
-    end,
-    Options = {
-        "Items",
-        "Drops",
-        "Chests",
-        "Loots",
-        "Cursebloom",
-        "Talisman"
-    }
-})
-
-local AutoCollectToggle = PlayerTab.Toggle({
-    Text = "Auto-Collect",
-    Callback = function(Value)
-        ConfigSettings.AutoCollectToggle = Value
+        ConfigSettings.AutoCollectChestsToggle = Value
+        getgenv().autocollectchest = Value
         if Value then
-            getgenv().autocollect = true
             task.spawn(function()
-                local Players = game:GetService("Players")
-                local GuiService = game:GetService("GuiService")
-                local VirtualInputManager = game:GetService("VirtualInputManager")
-                local player = Players.LocalPlayer
-                local drops = workspace.Objects.Drops
-                
-                -- Ensure autocollectselection is a table
-                getgenv().autocollectselection = getgenv().autocollectselection or {}
-                
-                while getgenv().autocollect do
-                    -- Check if "Chests" exists in autocollectselection (now guaranteed to be a table)
-                    if table.find(getgenv().autocollectselection, "Chests") then
-                        local lootGui = player.PlayerGui.Loot
-                        
-                        if not lootGui.Enabled then
-                            -- Check and collect chest
-                            local chest = drops:FindFirstChild("Chest")
-                            if chest then
-                                local collectPrompt = chest:FindFirstChild("Collect")
-                                if collectPrompt then
-                                    fireproximityprompt(collectPrompt, 1, false)
-                                end
+                while getgenv().autocollectchest do
+                    local chest = workspace.Objects["Drops"]:FindFirstChild("Chest")
+                    if chest then
+                        -- Collect directly if Loot GUI is disabled
+                        if not game:GetService("Players").LocalPlayer.PlayerGui.Loot.Enabled then
+                            local collectPrompt = chest:FindFirstChild("Collect")
+                            if collectPrompt then
+                                fireproximityprompt(collectPrompt, 1, false)
                             end
+                        -- Collect using GUI if enabled
                         else
-                            -- Handle loot UI
-                            local flipButton = lootGui.Frame.Flip
-                            GuiService.SelectedObject = flipButton
-                            
-                            -- Click flip button
-                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
-                            task.wait() -- Small delay between key events
-                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
+                            local button = game:GetService("Players").LocalPlayer.PlayerGui.Loot.Frame.Flip
+                            game:GetService("GuiService").SelectedObject = button
+                            game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+                            game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Return, false, game)
                         end
                     end
-                    
-                    -- You can add additional checks for other types, like "Items", "Drops", etc.
-                    if table.find(getgenv().autocollectselection, "Items") then
-                        -- Add item collection logic here if needed
-                    end
-                    
-                    -- Add similar checks for other types if needed...
-                    
-                    task.wait() -- Reduced delay while maintaining efficiency
+                    task.wait(0.1) -- Adjust delay as needed
                 end
             end)
-        else
-            getgenv().autocollect = false
         end
     end,
-    Enabled = ConfigSettings.AutoCollectToggle
+    Enabled = ConfigSettings.AutoCollectChestsToggle
+})
+
+local AutoCollectDropsToggle = PlayerTab.Toggle({
+    Text = "Auto-Collect Drops",
+    Callback = function(Value)
+        ConfigSettings.AutoCollectDropsToggle = Value
+        getgenv().autocollectdrops = Value
+        if Value then
+            task.spawn(function()
+                while getgenv().autocollectdrops do
+                    task.wait()
+                end
+            end)
+        end
+    end,
+    Enabled = ConfigSettings.AutoCollectDropsToggle
 })
 
 
@@ -639,10 +603,8 @@ local desiredInnates = {} -- Table to store desired innates for each slot
 
 local SlotsDropdown = CustomizationTab.Dropdown({
     Text = "Innate Slot",
-    MultiSelect = false,
-    DefaultSelection = ConfigSettings.SlotsDropdown,
+    MultiSelect = true,
     Callback = function(Value)
-        ConfigSettings.SlotsDropdown = Value
         if type(Value) == "table" then
             selectedSlots = Value -- Update the selected slots
             print("Selected Slots: " .. table.concat(selectedSlots, ", "))
@@ -662,9 +624,7 @@ local SlotsDropdown = CustomizationTab.Dropdown({
 local InnateDropdown = CustomizationTab.Dropdown({
     Text = "Innate Selection",
     MultiSelect = true,
-    DefaultSelection = ConfigSettings.InnateDropdown,
     Callback = function(Value)
-        ConfigSettings.InnateDropdown = Value
         if type(Value) == "table" then
             desiredInnates = Value -- Update the desired innates
             print("Desired Innates: " .. table.concat(desiredInnates, ", "))
@@ -739,7 +699,7 @@ local sectiontest = CustomizationTab.Section({
 local N = CustomizationTab.Button({
     Text = "Redeem All Codes",
     Callback = function()
-        local codetable = {"TOP_SECRET", "RELEASE", "MERRY_CHRISTMAS", "SHUTDOWN_AGAIN","BACK_UP_AGAIN"}
+        local codetable = {"HAPPY_2025", "RELEASE", "MERRY_CHRISTMAS", "50K_FOLLOWERS"}
 
         for _, code in ipairs(codetable) do
             game:GetService("ReplicatedStorage").Remotes.Server.Data.RedeemCode:InvokeServer(code)
@@ -1063,13 +1023,13 @@ local G = SettingsTab.Button({
             warn("Error decoding JSON: " .. errorMessage)
             return
         end
-
-        QuestToggle:SetState(configData.QuestToggle)
-        AutoCompleteQuestToggle:SetState(configData.AutoCompleteQuestToggle)
         KillAuraToggle:SetState(configData.KillAuraToggle)
+        AutoCompleteQuestToggle:SetState(configData.AutoCompleteQuestToggle)
+        QuestToggle:SetState(configData.QuestToggle)
         NoCooldownToggle:SetState(configData.NoCooldownToggle)
         AutoPromoteToggle:SetState(configData.AutoPromoteToggle)
-        AutoCollectToggle:SetState(configData.AutoCollectToggle)
+        AutoCollectChestsToggle:SetState(configData.AutoCollectChestsToggle)
+        AutoCollectDropsToggle:SetState(configData.AutoCollectDropsToggle)       
         AutoBossToggle:SetState(configData.AutoBossToggle)
         AutoReplayToggle:SetState(configData.AutoReplayToggle)
         AutoLoadSelectedConfig:SetState(configData.AutoLoadSelectedConfig)
@@ -1104,5 +1064,22 @@ local G = SettingsTab.Button({
 
         ConfigDropdown:Refresh()
     end
+})
+
+local AutoReplayToggle = BossTab.Toggle({
+    Text = "Auto-Load-Selected-Config",
+    Callback = function(Value)
+        getgenv().autoloadconfig = Value
+        ConfigSettings.AutoLoadSelectedConfig = Value
+        if Value then
+            task.spawn(function()
+                while getgenv().autoloadconfig do
+                    ConfigLibrary:SaveConfig("xenosjji/" .. getgenv().selectedfile .. ".json", ConfigSettings)
+                    task.wait(0.5)
+                end
+            end)
+        end
+    end,
+    Enabled = ConfigSettings.AutoLoadSelectedConfig
 })
 end
