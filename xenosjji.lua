@@ -21,11 +21,11 @@ local ConfigSettings = {
 }
 
 local function LoadSettings()
-    local loaded = ConfigLibrary:LoadConfig("xenosjji/" .. getgenv().selectedfile)
+    local loaded = ConfigLibrary:LoadConfig("xenosjji/Config.json")
     if loaded then
         return loaded
     end
-    return ConfigSettings -- return defaults if no saved config
+    return ConfigSettings
 end
 
 local function fileOrFolderExists(path)
@@ -33,7 +33,7 @@ local function fileOrFolderExists(path)
 end
 
 if not fileOrFolderExists("xenosjji") then
-    ConfigLibrary:SaveConfig("xenosjji/" .. getgenv().selectedfile, ConfigSettings)
+    ConfigLibrary:SaveConfig("xenosjji/Config.json", ConfigSettings)
 end
 
 local savedSettings = LoadSettings()
@@ -1064,22 +1064,5 @@ local G = SettingsTab.Button({
 
         ConfigDropdown:Refresh()
     end
-})
-
-local AutoReplayToggle = BossTab.Toggle({
-    Text = "Auto-Load-Selected-Config",
-    Callback = function(Value)
-        getgenv().autoloadconfig = Value
-        ConfigSettings.AutoLoadSelectedConfig = Value
-        if Value then
-            task.spawn(function()
-                while getgenv().autoloadconfig do
-                    ConfigLibrary:SaveConfig("xenosjji/" .. getgenv().selectedfile .. ".json", ConfigSettings)
-                    task.wait(0.5)
-                end
-            end)
-        end
-    end,
-    Enabled = ConfigSettings.AutoLoadSelectedConfig
 })
 end
